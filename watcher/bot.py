@@ -6,34 +6,32 @@ import logging
 from datetime import datetime
 
 from telegram import Update
-from telegram.ext import Updater, CallbackContext, CommandHandler, MessageHandler, Filters
+from telegram.ext import ApplicationBuilder, filters, MessageHandler,  CommandHandler, ContextTypes
 
-def start(update: Update, context: CallbackContext):
-    context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="I'm a bot, please talk to me!"
+    )
 
-def echo(update: Update, context: CallbackContext):
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f'ECHO: {update.message.text}')
-    context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
 
 def main():
-    updater = Updater(token=config.TELEGRAM_BOT_TOKEN, use_context=True)
-    dispatcher = updater.dispatcher
+    application = ApplicationBuilder().token(config.TELEGRAM_BOT_TOKEN).build()
 
     start_handler = CommandHandler('start', start)
-    dispatcher.add_handler(start_handler)
+    application.add_handler(start_handler)
 
-    echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
-    dispatcher.add_handler(echo_handler)
+    echo_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), echo)
+    application.add_handler(echo_handler)
 
-    updater.start_polling()
-
-    updater.stop()
+    application.run_polling()
 
 
 
 if __name__ == '__main__':
     print(f'Started {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
-    try:
-        main()
-    except KeyboardInterrupt as kie:
-        print(f'Killed: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+
+    main()
