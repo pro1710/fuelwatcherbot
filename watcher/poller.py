@@ -5,6 +5,7 @@ import os
 import pandas as pd
 import time
 import logging
+import helpers
 from fetcher.providers import wog
 
 # from importlib import reload
@@ -12,17 +13,6 @@ from fetcher.providers import wog
 
 PATH_TO_DATA = './data/'
 
-def prepareLogger():
-    log = logging.getLogger()  
-    for hdlr in log.handlers[:]:  
-        log.removeHandler(hdlr)
-
-    fileh = logging.FileHandler('./log/bot.log', 'a')
-    formatter = logging.Formatter('%(asctime)s [%(name)s:%(levelname)-8s] [%(filename)s:%(lineno)d] %(message)s')
-    fileh.setFormatter(formatter)
-    
-    log.addHandler(fileh)
-    log.setLevel(logging.DEBUG)
 
 #%%
 
@@ -46,7 +36,7 @@ def main():
 
 if __name__ == '__main__':
     print('Started')
-    prepareLogger()
+    helpers.prepare_logger('./log/poller.log')
 
     logging.info('Started')
     main()

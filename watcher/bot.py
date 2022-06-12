@@ -1,8 +1,8 @@
 #placeholder
 
 import config
-
 import logging
+import helpers
 from datetime import datetime
 
 from telegram import (
@@ -174,5 +174,6 @@ def main():
     application.run_polling()
 
 if __name__ == '__main__':
+    helpers.prepare_logger('./log/bot.log')
     logging.info(f'Started')
     main()
