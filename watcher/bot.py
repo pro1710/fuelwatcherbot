@@ -8,8 +8,7 @@ from datetime import datetime
 from telegram import (
     KeyboardButton,
     ReplyKeyboardMarkup,
-    Update,
-    ForceReply
+    Update
 )
 
 from telegram.ext import (
@@ -17,15 +16,15 @@ from telegram.ext import (
     filters, 
     MessageHandler,  
     CommandHandler,
-    CallbackQueryHandler, 
     ContextTypes
 )
-
 
 def current_time():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-
+class Command:
+    START = 'START'
+    STOP = 'STOP'
 
 def main_menu_keyboard():
     keyboard = [
@@ -33,8 +32,8 @@ def main_menu_keyboard():
             KeyboardButton('Set location', callback_data='set_location', request_location=True)
         ],
         [
-            KeyboardButton('Start polling'),
-            KeyboardButton('Stop polling')
+            KeyboardButton(Command.START),
+            KeyboardButton(Command.STOP)
         ]
     ]
     return keyboard
@@ -72,11 +71,9 @@ def remove_job_if_exists(name: str, context: ContextTypes.DEFAULT_TYPE):
     return True
 
 async def main_menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print(f'USER MSG: {update.message}')
-    print(f'DATA: {context.user_data}')
-    print(f'CONTEXT(args): {context.args}')
-
     if 'user_location' not in context.user_data:
+        logging.info(f'Polling event without location')
+
         await update.message.reply_text(
             f"Oops! Looks like you haven't set a location yet."
         )
@@ -85,8 +82,8 @@ async def main_menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     command = update.message.text
     chat_id = update.effective_message.chat_id
 
-    if command == 'Start polling':
-        print('Start polling event')
+    if command == Command.START:
+        logging.info('Start polling event')
 
         job_removed = remove_job_if_exists(str(chat_id), context)
 
@@ -112,8 +109,8 @@ async def main_menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    if command == 'Stop polling':
-        print('Stop polling event')
+    if command == Command.STOP:
+        logging.info('Stop polling event')
 
         job_removed = remove_job_if_exists(str(chat_id), context)
         msg = ''
@@ -135,17 +132,25 @@ async def main_menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def location_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.message.chat
-    user_name = (chat.first_name, chat.last_name)
-    user_location = update.message.location
+    location = update.message.location
+    context.user_data['user_location'] = {
+        'latitude': location.latitude, 
+        'longitude': location.longitude
+    }
+    context.user_data['user_name'] = {
+        'first_name': chat.first_name, 
+        'last_name': chat.last_name
+    }
 
-    context.user_data['user_location'] = user_location
-    context.user_data['user_name'] = user_name
+    user_name = f'{chat.first_name} {chat.last_name}'
+    user_location = f'{location.latitude},{location.longitude}' 
 
-    google_maps_url = f'https://www.google.com/maps/place/{user_location.latitude},{user_location.longitude}'
+    logging.info(f'Set new location for {user_name} {user_location}')
 
-    print(f'LOCATION: {user_name} {user_location.latitude, user_location.longitude}')
+    google_maps_url = f'https://www.google.com/maps/place/{user_location}'
+
     await update.effective_message.reply_text(
-        f'{user_name}, you are here {user_location.latitude, user_location.longitude}\n{google_maps_url}'
+        f'{user_name}, you are here {user_location}\n{google_maps_url}'
     )
 
 async def echo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -162,18 +167,12 @@ def main():
     application = ApplicationBuilder().token(config.TELEGRAM_BOT_TOKEN).build()
 
     application.add_handler(CommandHandler('start', start_handler))
-
     application.add_handler(MessageHandler(filters.LOCATION & ~filters.COMMAND, location_handler))
-
-    application.add_handler(MessageHandler(filters.Regex('^(Start|Stop)\spolling'), main_menu_handler))
-
+    application.add_handler(MessageHandler(filters.Regex(f'^({Command.START}|{Command.STOP})$'), main_menu_handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo_handler))
 
     application.run_polling()
 
-
-
 if __name__ == '__main__':
-    print(f'Started {current_time()}')
-
+    logging.info(f'Started')
     main()
