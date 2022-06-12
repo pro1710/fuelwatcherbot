@@ -4,12 +4,11 @@
 import os
 import pandas as pd
 import time
+
 import logging
+
 import helpers
 from fetcher.providers import wog
-
-# from importlib import reload
-# logging = reload(logging)
 
 PATH_TO_DATA = './data/'
 
@@ -28,6 +27,8 @@ def main():
     if not os.path.isdir(path_to_wog_data):
         print(f'No such directory: {path_to_wog_data}')
         return
+
+    pd.to_pickle(df_wog, f'{PATH_TO_DATA}/wog/last.pkl')
 
     fname = f'{path_to_wog_data}/out_{time.time():.3f}.csv'
     df_wog.to_csv(fname) 

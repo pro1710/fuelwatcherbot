@@ -59,6 +59,9 @@ class FuelStation:
         'DATE':None
     }
 
+    def getTemplate():
+        return FuelStation.TEMPLATE.copy()
+
     def default():
         return FuelStation(**FuelStation.TEMPLATE)
 

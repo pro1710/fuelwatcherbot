@@ -53,12 +53,13 @@ fuel_category_mapping.update(wog_fuel_category_mapping)
 wog_fuel_status_mapping = {
     'Готівка, банк.картки 20л. Гаманець ПРАЙД до 100л. Талони до 40л. Паливна картка (ліміт картки).': Fuel.Status.LIMITED,
     'Пальне відсутнє.': Fuel.Status.MISSING,
-    'тільки спецтранспорт.': Fuel.Status.SPECONLY
+    'тільки спецтранспорт.': Fuel.Status.SPECONLY,
+    'Тільки спецтранспорт.': Fuel.Status.SPECONLY
 }
 fuel_status_mapping.update(wog_fuel_status_mapping)
 
 def convert2station(station_descr, station_info):
-    fuel_station = FuelStation.TEMPLATE
+    fuel_station = FuelStation.getTemplate()
     
     fuel_station['ID'] = station_descr['id']
     fuel_station['LINK'] = station_descr['link']
