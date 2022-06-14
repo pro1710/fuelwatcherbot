@@ -16,23 +16,30 @@ PATH_TO_DATA = './data/'
 #%%
 
 def main():
-    ts = time.time()
+    
     if not os.path.isdir(PATH_TO_DATA):
         print(f'No such directory: {PATH_TO_DATA}')
         return
 
-    df_wog = wog.getData()
+    epoch = 0
+    while True:
+        ts = time.time()
+        df_wog = wog.getData()
 
-    path_to_wog_data = f'{PATH_TO_DATA}/wog/'
-    if not os.path.isdir(path_to_wog_data):
-        print(f'No such directory: {path_to_wog_data}')
-        return
+        path_to_wog_data = f'{PATH_TO_DATA}/wog/'
+        if not os.path.isdir(path_to_wog_data):
+            print(f'No such directory: {path_to_wog_data}')
+            return
 
-    pd.to_pickle(df_wog, f'{PATH_TO_DATA}/wog/last.pkl')
+        pd.to_pickle(df_wog, f'{PATH_TO_DATA}/wog/last.pkl')
 
-    fname = f'{path_to_wog_data}/out_{time.time():.3f}.csv'
-    df_wog.to_csv(fname) 
-    print(f'Finished. Data saved into: {fname} [{time.time()-ts:.3f}]')
+        fname = f'{path_to_wog_data}/out_{time.time():.3f}.csv'
+        df_wog.to_csv(fname) 
+        
+        print(f'{helpers.current_time()} Finished[{epoch}]. Data saved into: {fname} [{time.time()-ts:.3f}]')
+        epoch += 1
+        time.sleep(15*60)
+
 
 
 if __name__ == '__main__':

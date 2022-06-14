@@ -76,9 +76,9 @@ def convert2station(station_descr, station_info):
         raw_fuel_category, raw_fuel_status = tuple(map(lambda x: x.strip(), fuel_info.split(' - ')))
         # convers to functions
         fuel_category = fuel_category_mapping[raw_fuel_category]
-        fuel_status = fuel_status_mapping[raw_fuel_status]
+        # fuel_status = fuel_status_mapping[raw_fuel_status]
         
-        fuel_station[fuel_category.name] = fuel_status.name
+        fuel_station[fuel_category.name] = raw_fuel_status
 
     return fuel_station
 

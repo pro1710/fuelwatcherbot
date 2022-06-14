@@ -3,9 +3,8 @@
 import config
 import logging
 import helpers
+import traceback
 from datetime import datetime
-
-import sandbox
 
 from telegram import (
     KeyboardButton,
@@ -21,17 +20,16 @@ from telegram.ext import (
     ContextTypes
 )
 
-def current_time():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
 class Command:
     START = 'START'
     STOP = 'STOP'
+    FORCE_UPDATE = 'FORCE UPDATE'
 
 def main_menu_keyboard():
     keyboard = [
         [
-            KeyboardButton('Set location', callback_data='set_location', request_location=True)
+            KeyboardButton('Set location', request_location=True),
+            KeyboardButton(Command.FORCE_UPDATE)
         ],
         [
             KeyboardButton(Command.START),
@@ -58,9 +56,10 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def send_update(context: ContextTypes.DEFAULT_TYPE):
     job = context.job
 
-    # data = sandbox.
+    # TODO: rework
 
-    msg = f'Update({current_time()}) - 30sec: {job.data}'
+    msg = f'UPDATE({helpers.current_time()})\n'
+    msg += '\n'.join(helpers.get_closest('./data/wog/last.pkl', job.data['user_location']))
     await context.bot.send_message(
         job.chat_id, 
         text=msg
@@ -93,7 +92,7 @@ async def main_menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         context.job_queue.run_repeating(
             send_update, 
-            interval=30, 
+            interval=30*60, 
             first=1, 
             chat_id=chat_id, 
             name=str(chat_id),
@@ -106,7 +105,7 @@ async def main_menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             msg += 'Initialize polling:'
 
-        msg += f'\n{current_time()}'
+        msg += f'\n{helpers.current_time()}'
 
         await update.effective_message.reply_text(
             msg
@@ -123,10 +122,18 @@ async def main_menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             msg += 'Polling hasnt been started yet:'
 
-        msg += f'\n{current_time()}'
+        msg += f'\n{helpers.current_time()}'
 
         await update.effective_message.reply_text(
             msg
+        )
+        return
+
+    if command == Command.FORCE_UPDATE:
+        msg = f'UPDATE({helpers.current_time()})\n'
+        msg += '\n'.join(helpers.get_closest('./data/wog/last.pkl', context.user_data['user_location']))
+        await update.effective_message.reply_text(
+            text=msg
         )
         return
 
@@ -167,17 +174,27 @@ async def echo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f'You said: {update.message.text}'
     )
 
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    logging.error(msg="Exception while handling an update:", exc_info=context.error)
+    tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
+
+    print("\n".join(tb_list))
+
 def main():
     application = ApplicationBuilder().token(config.TELEGRAM_BOT_TOKEN).build()
 
     application.add_handler(CommandHandler('start', start_handler))
     application.add_handler(MessageHandler(filters.LOCATION & ~filters.COMMAND, location_handler))
-    application.add_handler(MessageHandler(filters.Regex(f'^({Command.START}|{Command.STOP})$'), main_menu_handler))
+    application.add_handler(MessageHandler(filters.Regex(f'^({Command.START}|{Command.STOP}|{Command.FORCE_UPDATE})$'), main_menu_handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo_handler))
+
+    application.add_error_handler(error_handler)
 
     application.run_polling()
 
 if __name__ == '__main__':
     helpers.prepare_logger('./log/bot.log')
     logging.info(f'Started')
+    print(f'Started: {helpers.current_time()}')
     main()
