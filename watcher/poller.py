@@ -24,7 +24,8 @@ def main():
     epoch = 0
     while True:
         ts = time.time()
-        df_wog = wog.getData()
+        wog_data = wog.getData()
+        df_wog = pd.DataFrame(wog_data)
 
         path_to_wog_data = f'{PATH_TO_DATA}/wog/'
         if not os.path.isdir(path_to_wog_data):

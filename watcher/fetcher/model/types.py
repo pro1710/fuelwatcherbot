@@ -32,7 +32,7 @@ class Fuel:
     class Other(Enum):
         UNKNOWN = 1
         IRRELEVANT = 2 
-        # LPG = 3
+        LPG = 3
 
         def __str__(self):
             return f'{self.name}'
@@ -56,7 +56,7 @@ class FuelStation:
         'LONGITUDE': None,
         'ADDRESS': None,
         'STATUS': None,
-        'DATE':None
+        'DATE': None
     }
 
     def getTemplate():

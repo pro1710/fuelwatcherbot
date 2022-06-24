@@ -91,7 +91,7 @@ def getData():
     for i, station_descr in enumerate(fuel_station_list):
         station_info = getStationInfo(station_descr)
         try:
-            fuel_station = convert2station(station_descr, station_info)
+            yield convert2station(station_descr, station_info)
         except Exception as e:
             logging.warning(f'Failed to process: {station_descr} [{e}]')
             continue
@@ -100,4 +100,4 @@ def getData():
         
         time.sleep(0.05)
 
-    return pd.DataFrame(fuel_station_data)
+    return fuel_station_data

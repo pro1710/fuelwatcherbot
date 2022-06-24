@@ -1,7 +1,7 @@
 #%%
 import helpers
 import pandas as pd
-from fetcher.entities.types import Fuel
+from fetcher.model.types import Fuel
 
 from config import user_location
 #%%
