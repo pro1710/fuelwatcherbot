@@ -1,38 +1,165 @@
-#%%
+
+#%% 
 import helpers
-import pandas as pd
+import config
 from fetcher.model.types import Fuel
+from fetcher.model.common import *
 
-from config import user_location
-#%%
-
-
-
-
-
+import pandas as pd
+import pymongo
 
 #%%
 
-df = pd.read_pickle('../../data/wog/last.pkl')
 
-mk1 = helpers.Coords(**user_location)
-def foo(lat2, long2):
-        mk2 = helpers.Coords(latitude=lat2, longitude=long2)
-        return round(helpers.Stats.distance(mk1, mk2), 1)
+connection = pymongo.MongoClient('localhost', 27017)
 
-df['DISTANCE'] = df.apply(lambda r: foo(r['LATITUDE'], r['LONGITUDE']), axis=1)
-dfByDist = df.sort_values(by=['DISTANCE'])
-df12km= dfByDist[dfByDist['DISTANCE'] < 12]
+print(connection.list_database_names())
+db = connection['fuel_stations']
 
-def has(val):
-    try:
-        return 'Готівка, банк.картки' in val 
-    except:
-        return False
+print(db.list_collection_names())
+collection = db['wog']
+
+#%%
+
+collection.create_index([ ('LOCATION', pymongo.GEOSPHERE ) ])
+
+print(sorted(list(collection.index_information())))
+#%%
+res = collection.find(
+     {'LOCATION': {
+        '$nearSphere':  [
+            config.user_location['longitude'],
+            config.user_location['latitude']
+        ]
+     }  
+    }).limit(5)
+  
+
+for fs in res:
+    print(fs)
+
+
+#%%
+res = collection.aggregate( [
+     {'$match': {
+        'ID': {'$in': [807, 902]}
+    }},
+    {'$group': {
+        '_id': '$ID',
+        'DOC': {'$last': '$$ROOT'}
+    }}
+    ] )
+
+for fs in res:
+    print(fs)
+
+#%%
+res = collection.aggregate( [
+     {'$geoNear': {
+        'near': {
+            config.user_location['longitude'],
+            config.user_location['latitude']
+        },
+        'distanceField': 'dist.calculated',
+        'key': 'LOCATION'
+        }
+    },
+    {'$group': {
+        '_id': '$ID',
+        'DOC': {'$last': '$$ROOT'}
+    }}
+    ] 
+)
+
+#%%
+res = db.wog.aggregate([
+    {'$geoNear': {
+        'near': {
+            'type': 'Point',
+            'coordinates':  [
+                config.user_location['longitude'],
+                config.user_location['latitude']
+            ]
+        }, 
+        'maxDistance': 15000,
+        'spherical': False,
+        'distanceField': 'DISTANCE',
+        'distanceMultiplier': 0.001
+        }
+    },
+    {'$group': {
+        '_id': '$ID',
+        'DOC': {'$max': 'DATE'}
+        }
+    },
+    {
+        '$sort': {'DOC.DISTANCE': 1, '_id': 1}
+    }
+])
+
+#%%
+res = db.wog.aggregate([
+    {'$geoNear': {
+        'near': {
+            'type': 'Point',
+            'coordinates':  [
+                config.user_location['longitude'],
+                config.user_location['latitude']
+            ]
+        }, 
+        'maxDistance': 15000,
+        'spherical': False,
+        'distanceField': 'DISTANCE',
+        'distanceMultiplier': 0.001
+        }
+    },
+    {'$sort': {'DATE': 1, '_id': 1}
+    },
+    {'$group': {
+        '_id': '$ID',
+        'DOC': {'$last': '$$ROOT'}
+        }
+    },
+    {'$sort': {'DOC.DISTANCE': 1, '_id': 1}
+    }
+])
+for fs in res:
+    # print(fs)
+    doc = fs['DOC']
+    print(doc['ID'], doc['DISTANCE'], doc['DATE'], doc['CITY'])
+#%%
+
+connection = pymongo.MongoClient('localhost', 27017)
+res = getLatestNearest(connection, 
+                       db_name='fuel_station', 
+                       col_name='wog',
+                       loc=config.user_location,
+                       max_dist=10000
+                       )
+# collection.create_index([ ('LOCATION', pymongo.GEOSPHERE ) ])
+
+#%%
+
+# df = pd.read_pickle('../../data/wog/last.pkl')
+
+# mk1 = helpers.Coords(**user_location)
+# def foo(lat2, long2):
+#         mk2 = helpers.Coords(latitude=lat2, longitude=long2)
+#         return round(helpers.Stats.distance(mk1, mk2), 1)
+
+# df['DISTANCE'] = df.apply(lambda r: foo(r['LATITUDE'], r['LONGITUDE']), axis=1)
+# dfByDist = df.sort_values(by=['DISTANCE'])
+# df12km= dfByDist[dfByDist['DISTANCE'] < 12]
+
+# def has(val):
+#     try:
+#         return 'Готівка, банк.картки' in val 
+#     except:
+#         return False
 
 
 
-dfByDist[dfByDist['A95'].apply(has)].head()
+# dfByDist[dfByDist['A95'].apply(has)].head()
 
 
 
@@ -95,4 +222,8 @@ dfByDist[dfByDist['A95'].apply(has)].head()
 
 
 
-# %%
+# # %%
+# import sqlite3
+# # %%
+# from fetcher import model
+# # %%

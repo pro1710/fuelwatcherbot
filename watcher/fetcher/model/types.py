@@ -52,11 +52,11 @@ class FuelStation:
         'ID': None,
         'LINK': None, 
         'CITY': None, 
-        'LATITUDE': None, 
-        'LONGITUDE': None,
         'ADDRESS': None,
         'STATUS': None,
-        'DATE': None
+        'DATE': None,
+        'LOCATION': None,
+        'PROVIDER': None
     }
 
     def getTemplate():
