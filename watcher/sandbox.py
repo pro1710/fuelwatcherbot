@@ -12,6 +12,19 @@ import pymongo
 
 
 connection = pymongo.MongoClient('localhost', 27017)
+res = getLatestNearest(connection, 
+                       db_name='fuel_stations', 
+                       col_name='wog',
+                       loc=config.user_location,
+                       max_dist=10000
+                       )
+
+for fs in res:
+    print(fs)
+#%%
+
+
+connection = pymongo.MongoClient('localhost', 27017)
 
 print(connection.list_database_names())
 db = connection['fuel_stations']
@@ -129,13 +142,7 @@ for fs in res:
     print(doc['ID'], doc['DISTANCE'], doc['DATE'], doc['CITY'])
 #%%
 
-connection = pymongo.MongoClient('localhost', 27017)
-res = getLatestNearest(connection, 
-                       db_name='fuel_station', 
-                       col_name='wog',
-                       loc=config.user_location,
-                       max_dist=10000
-                       )
+
 # collection.create_index([ ('LOCATION', pymongo.GEOSPHERE ) ])
 
 #%%

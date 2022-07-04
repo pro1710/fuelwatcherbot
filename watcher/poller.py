@@ -9,11 +9,11 @@ import time
 import logging
 
 import helpers
-from fetcher.providers import wog
-
+from model.providers import wog
+from model import model
 PATH_TO_DATA = './data/'
 
-
+import config  
 #%%
 
 def main():
@@ -22,9 +22,9 @@ def main():
         print(f'No such directory: {PATH_TO_DATA}')
         return
 
-    connection = MongoClient('localhost', 27017)
-    db = connection['fuel_stations']
-    wog_collection = db['wog']
+    db = model.FuelStationDB(config.mongo_connection_data)
+    db.connect()
+    wog_collection = db.collection('wog')
 
     epoch = 0
     while True:

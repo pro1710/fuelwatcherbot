@@ -47,29 +47,42 @@ class Fuel:
         def __str__(self):
             return f'{self.name}'
 
-class FuelStation:
+# class CommonFuelStation:
+#     def __init__(self):
+#         self.ID = None
+#         self.LINK = None
+#         self.CITY = None
+#         self.ADDRESS = None
+#         self.DATE = None
+#         self.LOCATION = None
+#         self.PROVIDER = None
+#         self.STORAGE
+
+class GenericFuelStation:
     TEMPLATE = {
         'ID': None,
         'LINK': None, 
         'CITY': None, 
         'ADDRESS': None,
-        'STATUS': None,
+        'DATA': None,
         'DATE': None,
         'LOCATION': None,
         'PROVIDER': None
     }
 
+    @staticmethod
     def getTemplate():
-        return FuelStation.TEMPLATE.copy()
+        return GenericFuelStation.TEMPLATE.copy()
 
+    @staticmethod
     def default():
-        return FuelStation(**FuelStation.TEMPLATE)
+        return GenericFuelStation(**GenericFuelStation.TEMPLATE)
 
     def copy(self):
-        return FuelStation(**self.__dict__)
+        return GenericFuelStation(**self.__dict__)
 
     def __init__(self, **kwargs):
-        self.update(**FuelStation.TEMPLATE)
+        self.update(**GenericFuelStation.TEMPLATE)
         self.update(**kwargs)
 
     def __str__(self):
@@ -83,3 +96,6 @@ class FuelStation:
 
     def drop(self, k):
         del self.__dict__[k]
+
+    def hasKey(self, k):
+        return k in self.__dict__
